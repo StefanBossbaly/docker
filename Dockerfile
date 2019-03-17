@@ -1,5 +1,5 @@
 
-FROM python:2.7
+FROM python:2.7-alpine
 EXPOSE 5000
 LABEL maintainer "gaetancollaud@gmail.com"
 
@@ -9,32 +9,17 @@ ARG tag=master
 WORKDIR /opt/octoprint
 
 # In case of alpine
-#RUN apk update && apk upgrade \
-#    && apk add --no-cache bash git openssh gcc\
-#		&& pip install virtualenv \
-#		&& rm -rf /var/cache/apk/*
-
-#install ffmpeg
-RUN cd /tmp \
-  && wget -O ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz \
-	&& mkdir -p /opt/ffmpeg \
-	&& tar xvf ffmpeg.tar.xz -C /opt/ffmpeg --strip-components=1 \
-  && rm -Rf /tmp/*
-
-#install Cura
-RUN cd /tmp \
-  && wget https://github.com/Ultimaker/CuraEngine/archive/${CURA_VERSION}.tar.gz \
-  && tar -zxf ${CURA_VERSION}.tar.gz \
-	&& cd CuraEngine-${CURA_VERSION} \
-	&& mkdir build \
-	&& make \
-	&& mv -f ./build /opt/cura/ \
-  && rm -Rf /tmp/*
+RUN set -ex \
+    && apk update && apk upgrade \
+    && apk add --no-cache bash git gcc linux-headers musl-dev ffmpeg avrdude \
+    && pip install virtualenv \
+    && rm -rf /var/cache/apk/*
 
 #Create an octoprint user
-RUN useradd -ms /bin/bash octoprint && adduser octoprint dialout
+RUN adduser -D -s /bin/bash octoprint && adduser octoprint dialout
 RUN chown octoprint:octoprint /opt/octoprint
 USER octoprint
+
 #This fixes issues with the volume command setting wrong permissions
 RUN mkdir /home/octoprint/.octoprint
 
